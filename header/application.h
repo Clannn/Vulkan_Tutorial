@@ -29,6 +29,7 @@ namespace Clan
 			const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 			void* pUserData);
 
+
 		static std::vector<char> readBinaryFile(const std::string& filename);
 
 		void initWindow();
@@ -83,7 +84,7 @@ namespace Clan
 
 		void createCommandPool();
 
-		void createCommandBuffer();
+		void createCommandBuffers();
 
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
@@ -91,10 +92,14 @@ namespace Clan
 
 		void createSyncObjects();
 
+		void recreateSwapChain();
+
+		void cleanupSwapChain();
+
 	private:
 		static constexpr uint32_t WINDOW_WIDTH = 800;
 		static constexpr uint32_t WINDOW_HEIGHT = 600;
-		//static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+		static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 #ifdef NDEBUG
 		static constexpr bool enableValidationLayers = false;
 #else
@@ -122,9 +127,10 @@ namespace Clan
 		VkPipeline graphicsPipeline{};
 		std::vector<VkFramebuffer> swapChainFramebuffers{};
 		VkCommandPool commandPool{};
-		VkCommandBuffer commandBuffer{};
-		VkSemaphore imageAvailableSemaphore{};
-		VkSemaphore renderFinishedSemaphore{};
-		VkFence inFlightFence{};
+		std::vector<VkCommandBuffer> commandBuffers{};
+		std::vector<VkSemaphore> imageAvailableSemaphores{};
+		std::vector<VkSemaphore> renderFinishedSemaphores{};
+		std::vector<VkFence> inFlightFences{};
+		uint32_t currentFrame{0};
 	};
 }
