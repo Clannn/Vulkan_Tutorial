@@ -159,12 +159,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="low-Level\Memory_Management\StackAllocator.cpp" />
     <ClCompile Include="source\application.cpp" />
     <ClCompile Include="source\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header\application.h" />
     <ClInclude Include="header\macro.h" />
+    <ClInclude Include="low-Level\Memory_Management\StackAllocator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
