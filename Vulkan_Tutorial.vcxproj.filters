@@ -21,7 +21,7 @@
     <ClCompile Include="source\application.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="low-Level\Memory_Management\StackAllocator.cpp">
+    <ClCompile Include="source\StackAllocator.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -32,7 +32,10 @@
     <ClInclude Include="header\macro.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="low-Level\Memory_Management\StackAllocator.h">
+    <ClInclude Include="header\StackAllocator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="header\stb_image.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

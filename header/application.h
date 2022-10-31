@@ -118,6 +118,8 @@ namespace Clan
 
 		void createDescriptorSets();
 
+		void createTextureImage();
+
 	private:
 		static constexpr uint32_t WINDOW_WIDTH = 800;
 		static constexpr uint32_t WINDOW_HEIGHT = 600;
@@ -161,5 +163,7 @@ namespace Clan
 		std::vector<VkDeviceMemory> uniformBuffersMemory{};
 		VkDescriptorPool descriptorPool{};
 		std::vector<VkDescriptorSet> descriptorSets{};
+		VkImage textureImage;
+		VkDeviceMemory textureImageMemory;
 	};
 }
