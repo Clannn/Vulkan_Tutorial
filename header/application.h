@@ -108,6 +108,16 @@ namespace Clan
 
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
+		void createDescriptorSetLayout();
+
+		void createUniformBuffers();
+
+		void updateUniformBuffer(uint32_t imageIndex);
+
+		void createDescriptorPool();
+
+		void createDescriptorSets();
+
 	private:
 		static constexpr uint32_t WINDOW_WIDTH = 800;
 		static constexpr uint32_t WINDOW_HEIGHT = 600;
@@ -135,6 +145,7 @@ namespace Clan
 		VkExtent2D swapChainExtent{};
 		std::vector<VkImageView> swapChainImageViews{};
 		VkRenderPass renderPass{};
+		VkDescriptorSetLayout descriptorSetLayout{};
 		VkPipelineLayout pipelineLayout{};
 		VkPipeline graphicsPipeline{};
 		std::vector<VkFramebuffer> swapChainFramebuffers{};
@@ -144,7 +155,11 @@ namespace Clan
 		std::vector<VkSemaphore> renderFinishedSemaphores{};
 		std::vector<VkFence> inFlightFences{};
 		uint32_t currentFrame{0};
-		VkBuffer VertIDBuffer;
-		VkDeviceMemory VertIDBufferMemory;
+		VkBuffer VertIDBuffer{};
+		VkDeviceMemory VertIDBufferMemory{};
+		std::vector<VkBuffer> uniformBuffers{};
+		std::vector<VkDeviceMemory> uniformBuffersMemory{};
+		VkDescriptorPool descriptorPool{};
+		std::vector<VkDescriptorSet> descriptorSets{};
 	};
 }
