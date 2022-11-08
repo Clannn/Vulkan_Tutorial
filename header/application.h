@@ -132,6 +132,14 @@ namespace Clan
 
 		void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
+		void createTextureImageView();
+
+		void createTextureSampler();
+
+		void createDepthResources();
+
+		VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
+
 	private:
 		static constexpr uint32_t WINDOW_WIDTH = 800;
 		static constexpr uint32_t WINDOW_HEIGHT = 600;
@@ -175,7 +183,14 @@ namespace Clan
 		std::vector<VkDeviceMemory> uniformBuffersMemory{};
 		VkDescriptorPool descriptorPool{};
 		std::vector<VkDescriptorSet> descriptorSets{};
-		VkImage textureImage;
-		VkDeviceMemory textureImageMemory;
+		VkImage textureImage{};
+		VkDeviceMemory textureImageMemory{};
+		VkImageView textureImageView{};
+		VkSampler textureSampler{};
+		VkPhysicalDeviceProperties deviceProperties{};
+		VkPhysicalDeviceFeatures deviceFeatures{};
+		VkImage depthImage{};
+		VkDeviceMemory depthImageMemory{};
+		VkImageView depthImageView{};
 	};
 }

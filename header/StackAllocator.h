@@ -31,9 +31,9 @@ namespace Clan
 		//Clears the entire stack
 		inline void clear();
 
-		inline uint32_t getSize() { return m_pTop - m_pBottom; }
+		inline uint32_t getSize() { return static_cast<uint32_t>(m_pTop - m_pBottom); }
 
-		inline uint32_t getCapability() { return m_pCapability - m_pBottom; }
+		inline uint32_t getCapability() { return static_cast<uint32_t>(m_pCapability - m_pBottom); }
 
 	private:
 		//Shift the given address and ensure it is aligned to the given 'align'
