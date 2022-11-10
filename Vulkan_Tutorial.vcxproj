@@ -168,6 +168,7 @@
     <ClInclude Include="header\macro.h" />
     <ClInclude Include="header\stb_image.h" />
     <ClInclude Include="header\StackAllocator.h" />
+    <ClInclude Include="header\tiny_obj_loader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <optional>
 #include <unordered_set>
+#include <unordered_map>
 #include <algorithm>
 #include <limits>
 #include <fstream>
@@ -8,68 +9,38 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
+
 #include "application.h"
 #include "macro.h"
 
-namespace Clan
-{
-	struct Vertex {
-		glm::vec3 position;
-		glm::vec3 color;
-		glm::vec2 texCoord;
-
-		static VkVertexInputBindingDescription getBindingDescription() {
-			VkVertexInputBindingDescription bindingDescription{};
-			bindingDescription.binding = 0;
-			bindingDescription.stride = sizeof(Vertex);
-			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-			return bindingDescription;
-		}
-
-		static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
-			std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
-			attributeDescriptions[0].binding = 0;
-			attributeDescriptions[0].location = 0;
-			attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-			attributeDescriptions[0].offset = offsetof(Vertex, position);
-			attributeDescriptions[1].binding = 0;
-			attributeDescriptions[1].location = 1;
-			attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-			attributeDescriptions[1].offset = offsetof(Vertex, color);
-			attributeDescriptions[2].binding = 0;
-			attributeDescriptions[2].location = 2;
-			attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-			attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
-			return attributeDescriptions;
+namespace std {
+	template<>
+	class hash<Clan::Vertex> {
+	public:
+		size_t operator()(Clan::Vertex const& vertex) const {
+			return ((hash<glm::vec3>()(vertex.position) ^ (hash<glm::vec3>{}(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
 		}
 	};
+}
+
+namespace Clan
+{
+	std::vector<Vertex> vertices{};
+	std::vector<uint32_t> indices{};
+	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
 	struct UniformBufferObject {
 		alignas(16) glm::mat4 model;
 		alignas(16) glm::mat4 view;
 		alignas(16) glm::mat4 proj;
-	};
-
-	std::vector<Vertex> vertices = {
-		{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-		{{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-		{{ 0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-		{{-0.5f,  0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-
-		{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-		{{ 0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-		{{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-		{{-0.5f,  0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-	};
-
-	std::vector<uint16_t> indices = {
-		0, 1, 2, 2, 3, 0,
-		4, 5, 6, 6, 7, 4,
 	};
 
 	struct HelloTriangleApplication::QueueFamilyIndices {
@@ -156,6 +127,7 @@ namespace Clan
 		createTextureImage();
 		createTextureImageView();
 		createTextureSampler();
+		loadModel();
 		createVertIDBuffer();
 		createUniformBuffers();
 		createDescriptorPool();
@@ -586,8 +558,10 @@ namespace Clan
 		rasterizer.depthClampEnable = VK_FALSE;
 		rasterizer.rasterizerDiscardEnable = VK_FALSE;
 		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-		//rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+		//rasterizer.polygonMode = VK_POLYGON_MODE_POINT;
+		//rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
+		//rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+		rasterizer.cullMode = VK_CULL_MODE_NONE;
 		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		rasterizer.depthBiasEnable = VK_FALSE;
 		rasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -821,7 +795,7 @@ namespace Clan
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &VertIDBuffer, offsets);
-		vkCmdBindIndexBuffer(commandBuffer, VertIDBuffer, sizeof(vertices[0]) * vertices.size(), VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(commandBuffer, VertIDBuffer, sizeof(vertices[0]) * vertices.size(), VK_INDEX_TYPE_UINT32);
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 		//Draw
 		vkCmdDrawIndexed(commandBuffer,static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
@@ -1018,7 +992,7 @@ namespace Clan
 		VkResult result = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout);
 		ASSERT(result == VK_SUCCESS);
 	}
-	//-----------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------f
 	void HelloTriangleApplication::createUniformBuffers()
 	{
 		uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -1106,7 +1080,7 @@ namespace Clan
 	void HelloTriangleApplication::createTextureImage()
 	{
 		int texWidth{ 0 }, texHeight{ 0 }, texChannels{ 0 };
-		stbi_uc* pixels = stbi_load("textures/texture_happiest_face.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		stbi_uc* pixels = stbi_load(TEXTURE_PATH, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		VkDeviceSize imageSize = texWidth * texHeight * 4;
 		ASSERT(pixels != nullptr);
 		VkBuffer stagingBuffer;
@@ -1243,18 +1217,6 @@ namespace Clan
 	void HelloTriangleApplication::createTextureImageView()
 	{
 		textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
-		//VkImageViewCreateInfo viewInfo{};
-		//viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		//viewInfo.image = textureImage;
-		//viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		//viewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
-		//viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		//viewInfo.subresourceRange.baseMipLevel = 0;
-		//viewInfo.subresourceRange.levelCount = 1;
-		//viewInfo.subresourceRange.baseArrayLayer = 0;
-		//viewInfo.subresourceRange.layerCount = 1;
-		//VkResult result = vkCreateImageView(device, &viewInfo, nullptr, &textureImageView);
-		//ASSERT(result == VK_SUCCESS);
 	}
 	//-----------------------------------------------------------------------------------------------
 	void HelloTriangleApplication::createTextureSampler()
@@ -1303,5 +1265,35 @@ namespace Clan
 		VkResult result = vkCreateImageView(device, &viewInfo, nullptr, &imageView);
 		ASSERT(result == VK_SUCCESS);
 		return imageView;
+	}
+	//-----------------------------------------------------------------------------------------------
+	void HelloTriangleApplication::loadModel()
+	{
+		tinyobj::attrib_t attrib{};
+		std::vector<tinyobj::shape_t> shapes{};
+		std::vector<tinyobj::material_t> materials{};
+		std::string warn, err;
+		bool result = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH);
+		ASSERT(result == true);
+		for (const auto& shape : shapes) {
+			for (const auto& index : shape.mesh.indices) {
+				Vertex vertex{};
+				vertex.position = {
+					attrib.vertices[3 * index.vertex_index + 0],
+					attrib.vertices[3 * index.vertex_index + 1],
+					attrib.vertices[3 * index.vertex_index + 2],
+				};
+				vertex.texCoord = {
+					attrib.texcoords[2 * index.texcoord_index + 0],
+					1.0f - attrib.texcoords[2 * index.texcoord_index + 1],
+				};
+				vertex.color = { 1.0f, 1.0f, 1.0f };
+				if (uniqueVertices.find(vertex) == uniqueVertices.end()) {
+					uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
+					vertices.push_back(vertex);
+				}
+				indices.push_back(uniqueVertices[vertex]);
+			}
+		}
 	}
 }
